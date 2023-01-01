@@ -115,26 +115,38 @@ cd EVALm/model_fine_tuning
 
 2. Open notebook
 
-Open the notebook ```jonfd/electra-small-nordic.ipynb``` either through your own IDE or through Google Colab (links are provided in the table below).
+Open the notebook ```Fine_tuning_models_template.ipynb``` either through your own IDE or through Google Colab (link is below).
 
 | Filename    | Colab link |
 | ----------- | ----------- |
-| Title       | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1OjNQI1otcRgYZU6hfBvnkiLocKU_-4hz#scrollTo=EnWYUwwkYOpW)       |
+| ```Fine_tuning_models_template.ipynb```       | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1OjNQI1otcRgYZU6hfBvnkiLocKU_-4hz#scrollTo=EnWYUwwkYOpW)       |
 
 
 ## Content of each notebook
-Each notebook consist of five steps
+Following are the content of the notebook
+
+1. GPU, installing packages and login to WANDB
+2. Installing required packages
+3. Importing packages, data and model
+4. Preprocessing
+    * Removing unwanted words
+    * Removing non-Danish sentences
+    * Split data into test, training and validation
+    * Converting dataset into dataset dict
+    * Tokenize data
+5. Evaluation metrics
+6. Define early stopping function
+7. Define hyperparameters
+8. Initialize Weights and Biases (WANDB)
+9. Hyperparameter tuning
+10 Fine-tuning
+
 
 1. Initialization of GPU, installation of necesarry packages and setup of WANDB
 2. Importing libraries, data, and the language model
 3. Data preprocessing
 4. Fine-tuning
 5. Evaluation
-
-## Conclusion
-In this project, we have successfully finetuned 11 Danish language models to demonstrate how a more fine-grained sub group error analysis metric can reveal new insights into language models. Suggestions for further research can be found in the paper _'A Deep Dive Into Danish NLP'_ (link provided in the top of this readme).
-
-This project is part of a bachelor thesis in Cognitive Science at Aarhus University, Denmark, 2023.
 
 <br />
 <p align="center">  
@@ -143,14 +155,13 @@ This project is part of a bachelor thesis in Cognitive Science at Aarhus Univers
 </p>
 
 ## 🔧 Set up
-1. Clone this repository:
+1. Navigate to this repository:
 
 ```
-git clone https://github.com/jorgenhw/bachelor_thesis
-cd bachelor_thesis/analysis_R
+cd EVALm/analysis_R
 ```
 
-2. Open markdown file 
+2. Open markdown file and follow the steps
 
 ## Content of markdown file
 
