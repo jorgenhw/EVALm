@@ -26,18 +26,15 @@
     <li><a href="#section-1">Section 1: <i>Topic Modelling</i></a></li>
      <ul>
       <li><a href="#setup">Setup</a></li>
-      <li><a href="#conclusion">Conclusion</a></li>
     </ul>
     <li><a href="#section-2">Section 2: <i>Fine-Tuning Models</i></a></li>
      <ul>
       <li><a href="#setup">Setup</a></li>
       <li><a href="#content-of-each-notebook">Content of each notebook</a></li>
-      <li><a href="#conclusion">Conclusion</a></li>
     </ul>
     <li><a href="#section-3">Section 3: <i>Evaluation Method</i></a></li>
      <ul>
       <li><a href="#setup">Setup</a></li>
-      <li><a href="#content-of-markdown-file">Content of markdown file</a></li>
       <li><a href="#conclusion">Conclusion</a></li>
     </ul>
     <li><a href="#contact">Contact</a></li>
