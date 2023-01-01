@@ -11,7 +11,7 @@
 
 
   <p align="center">
-    Niels Aalund Krogsgaard & Jørgen Højlund Wibe
+  By <i> Niels Aalund Krogsgaard & Jørgen Højlund Wibe </i>
   </p>
 </p>
 
