@@ -93,7 +93,7 @@ cd EVALm/topic_modellling
 2. Open notebook
 
 Open the notebook with the name ```BERTopic_-_template_script.ipynb``` either through your own IDE or through Google Colab (link below).
-(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1IoNVFxeqQTJTztl9ezG12BnC4NDEAt-M)
+[(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1IoNVFxeqQTJTztl9ezG12BnC4NDEAt-M)
 
 3. Follow the steps outlined in the notebook but with your own data
 
