@@ -7,7 +7,7 @@
   
   <h1 align="center">️<b>EVAL-M</b></h1> 
   <h2 align="center"><i>Error Vulnerability Analysis in Language Modelling </i></h2> 
-  <h3 align="center">🧠 Cognitive Science // Bachelor Thesis 🧠</h3>
+  <h3 align="center">📒 An Interactive Pipeline 📒</h3>
 
 
   <p align="center">
