@@ -5,7 +5,7 @@
     <img src="https://i.imgur.com/BtQCfMu.png" alt="Logo" width=200 height=200>
   </a>
   
-  <h1 align="center">️// <strong>EVAL-M</strong> //</h1> 
+  <h1 align="center">️// <b>EVAL-M</b> //</h1> 
   <h2 align="center"><i><strong>E</strong>rror **V**ulnerability **A**nalysis in **L**anguage **M**odelling </i></h2> 
   <h3 align="center">🧠 Cognitive Science // Bachelor Thesis 🧠</h3>
 
