@@ -49,16 +49,18 @@
 ## About the project
 EVAL-m is a method for subgroup error analysis is a technique that involves examining the performance of a language model on specific subgroups of data in order to understand where the model is making mistakes. This can be useful for identifying and addressing sources of bias in the model, as well as for identifying areas where the model may be particularly weak. To conduct a subgroup error analysis, one would first identify relevant subgroups of data, such as examples that contain specific types of errors or examples that pertain to certain domains. The model's performance on these subgroups would then be compared to its overall performance in order to identify patterns and trends in the errors it is making. This information can be used to adjust the model's training data or algorithms in order to improve its overall performance.
 
-EVAL-m consists of three phases: In the first phase, you apply a topic model to your data. In the second phase, you fine-tune a language model of interest on an annotated part of your data. In the last phase, you do error analysis on the subgroups made by the topic model. 
+## Usage
+To use this pipeline you need to adopt the following steps.
 
-### Structure of the readme file
-This file is structures as a pipeline, meaning that it contains step 1-9 on how to conduct the error analysis. There are three main sections:
+**NOTE**: There may be minor variations depending on the terminal and operating system you use. The following pipeline is designed to work using the JupyterNotebook environment Google Colab. If you use a different IDE or operating system, there may be slight variations and hiccups. Furthermore, it requires that pip is installed and you may also want to create a new virtual environment for this project.
 
-* **Section 1:** describes on how to do topic modelling with BERTopic in python.
+1. Clone repository
 
-* **Section 2:** Describes how to fine-tune models available on HuggingFace with TransformersAPI. 
+2. Conduct topic modelling
 
-* **Section 3:** contains a reproducible R-markdown script outlining how to conduct the final sub-group error analysis.
+3. Fine-tune language model(s)
+
+4. Conduct error analysis
 
 ## Requirements
 
@@ -66,8 +68,13 @@ This file is structures as a pipeline, meaning that it contains step 1-9 on how 
 * Python 3.6 or higher
 * An R-markdown capable IDE
 
-## Data
-aøsdpfkm
+## 🔧 Set up
+1. Clone this repository:
+
+```
+git clone https://github.com/jorgenhw/EVALm
+```
+
 
 <br />
 <p align="center">  
@@ -75,31 +82,20 @@ aøsdpfkm
   <h2 align="center"><i>Topic Modelling</i></h2>
 </p>
 
+
 ## 🔧 Set up
-1. Clone this repository:
+1. Navigate to this repository:
 
 ```
-git clone https://github.com/jorgenhw/bachelor_thesis
-cd bachelor_thesis/topic_modelling
+cd EVALm/topic_modellling
 ```
 
-2. Open notebook of interest
+2. Open notebook
 
-Open the notebook with the name of the topic modelling method you want to examine e.g. ```LDA.ipynb``` either through your own IDE or through Google Colab (links are provided in the table below).
+Open the notebook with the name ```BERTopic_-_template_script.ipynb``` either through your own IDE or through Google Colab (link below).
+(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1IoNVFxeqQTJTztl9ezG12BnC4NDEAt-M)
 
-The below table outlines which notebooks contains which methods.
-
-| Method      | Filename | Colab link |
-| ----------- | ----------- | ----------- |
-| Non-Negative Matrix Factorization (NMF)      | NMF.ipynb       | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1PfB7Xtf3NmcUYfu5muydD2bNB_AMz8PW)       |
-| Latent Dirichlet Allocation   | Text        | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1IoNVFxeqQTJTztl9ezG12BnC4NDEAt-M)        |
-| TweeTopic   | Text        | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1q1WYhRYJYb13hMwGvZRZ0MxP5X3eWVp0)        |
-| BERTopic   | Text        | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1P6t6s52G6ySedTDg_09bO_c_7SyQlv9u)        |
-
-## Conclusion
-In conclusion, the experiment we conducted to compare the performance of four topic modelling methods - NMF, LDA, BERTopic, and TweeTopic - showed that BERTopic was the best performer, meaning it was able to create the most human interpretable subgroups in the data. This was demonstrated through the evaluation method of qualitative assessment.
-
-
+3. Follow the steps outlined in the notebook but with your own data
 
 <br />
 <p align="center">  
@@ -109,16 +105,16 @@ In conclusion, the experiment we conducted to compare the performance of four to
 
 
 ## 🔧 Set up
-1. Clone this repository:
+1. Navigate this repository:
 
 ```
-git clone https://github.com/jorgenhw/bachelor_thesis
-cd bachelor_thesis/model_fine_tuning
+cd EVALm/model_fine_tuning
 ```
 
-2. Open notebook of interest
+2. Open notebook
 
 Open the notebook with the name of the model you want to examine e.g. ```jonfd/electra-small-nordic.ipynb``` either through your own IDE or through Google Colab (links are provided in the table below).
+(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1IoNVFxeqQTJTztl9ezG12BnC4NDEAt-M)  
 
 The below table outlines which notebooks contains which models.
 
