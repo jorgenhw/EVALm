@@ -1,0 +1,407 @@
+---
+title: "Model comparison"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# brms is only used for bayesian analysis
+pacman::p_load(tidyverse,devtools, data.table, brms)
+```
+
+# LOADING DATA
+
+```{r}
+######## LOADING CLASSIFICATION REPORT #################
+
+# Function for loading multiple files
+read_plus <- function(flnm) {
+    read_csv(flnm) %>% 
+        mutate(filename = flnm)
+}
+
+# model 1
+df_model_1 <- list.files(path = "../data/jonfd_electra-small-nordic", pattern = "*.csv", 
+               full.names = T) %>% 
+    map_df(~read_plus(.))
+# create binary indicator column that indicates misclassification
+df_model_1['MISS_binary'] <- ifelse(df_model_1$Misclassification == "TRUE", 1, 0)
+df_model_1$model <- 1
+
+# model 2
+df_model_2 <- list.files(path = "../data/vestinn_ScandiBERT", pattern = "*.csv", 
+               full.names = T) %>% 
+    map_df(~read_plus(.))
+df_model_2['MISS_binary'] <- ifelse(df_model_2$Misclassification == "TRUE", 1, 0) 
+df_model_2$model <- 2
+
+# model 1
+df_model_3 <- list.files(path = "../data/aelectra", pattern = "*.csv", 
+               full.names = T) %>% 
+    map_df(~read_plus(.))
+df_model_3['MISS_binary'] <- ifelse(df_model_3$Misclassification == "TRUE", 1, 0) 
+df_model_3$model <- 3
+
+###### COMBINING MODEL DATAFRAMES ######
+df_models <- rbind(df_model_1, df_model_2, df_model_3)
+
+
+########## LOADING TOPICS ###############
+df_topics <- read_csv(
+  "../data/BerTopic/sub_groups_16122022.csv" # path to csv containing the topic assignments for all documents
+  ) %>%
+  rename(Text = original_tweet)
+
+
+##### MERGING MODELS WITH TOPICS
+df_models_w_topics <- merge(df_models, df_topics, by = "Text", all.x = T, all.y = F) %>% 
+  select(Text, `Predicted Labels`, `True Labels`, new_topic, MISS_binary, filename, model) %>% 
+  rename(run = filename, topic = new_topic)
+```
+
+# VISUALISING TOPICS
+```{r}
+df_topics %>% 
+  ggplot(aes(x = as.factor(new_topic))) +
+  geom_histogram(stat = "count", aes(fill = new_topic)) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(title = "Histogram of Topic Counts", x = "Topic Number", y = "Count")
+
+#ggsave("../figures/plot_histogram_topics.png")
+```
+
+
+# ANALYSIS OF ONE MODEL
+## GETTING PER TOPIC ERROR RATES FOR THE MODEL
+```{r}
+df_models_w_topics_1 <- df_models_w_topics %>% 
+  filter(model == 1)
+
+error_rate_per_run_per_topic <- df_models_w_topics_1 %>% 
+  group_by(topic, run, model) %>% 
+  summarise("error_rate_per_run_per_topic" = mean(MISS_binary))
+
+error_rate_per_run_across_topics <- df_models_w_topics_1 %>% 
+  group_by(run, model) %>%
+  summarise("error_rate_per_run_across_topics" = mean(MISS_binary))
+
+all_error_rates_1 <- merge(error_rate_per_run_per_topic, error_rate_per_run_across_topics, by = "run", all.x = T, all.y = F)
+
+all_error_rates_1 <- all_error_rates_1 %>% 
+  rename(model = `model.x`) %>% 
+  select(topic, run, model, error_rate_per_run_per_topic, error_rate_per_run_across_topics)
+```
+
+## VISALUSING ACCURACIES
+```{r}
+all_error_rates_1 %>% 
+  ggplot(aes(x = as.factor(topic), y = error_rate_per_run_per_topic)) +
+  geom_hline(yintercept = mean(all_error_rates_1$error_rate_per_run_across_topics), linetype = "dashed")  +
+  geom_boxplot(fill = "#FF9999") +
+  theme_bw() +
+  labs(title = "Boxplot of Finegrained-Accuracy", subtitle = "Distribution of accuracies for one model on all topics", x = "Topic Number", y = "Accuracy")
+
+all_error_rates_1 %>% 
+  ggplot(aes(x = as.factor(topic), y = error_rate_per_run_per_topic - error_rate_per_run_across_topics)) +
+  geom_hline(yintercept = 0, linetype = "dashed")  +
+  geom_boxplot(fill = "#FF9999") +
+  theme_bw() +
+  labs(title = "Boxplot of RTAC", subtitle = "Distribution of RtAC for one model on all topics", x = "Topic Number", y = "RTAC")
+```
+
+
+# ANALYSIS AND COMPARISON OF MULTIPLE MODELS
+## GETTING PER TOPIC ERROR RATES FOR THE MODEL
+```{r}
+error_rate_per_run_per_topic <- df_models_w_topics %>% 
+  group_by(topic, run, model) %>% 
+  summarise("error_rate_per_run_per_topic" = mean(MISS_binary))
+
+error_rate_per_run_across_topics <- df_models_w_topics %>% 
+  group_by(run, model) %>%
+  summarise("error_rate_per_run_across_topics" = mean(MISS_binary))
+
+all_error_rates <- merge(error_rate_per_run_per_topic, error_rate_per_run_across_topics, by = "run", all.x = T, all.y = F)
+
+all_error_rates <- all_error_rates %>% 
+  rename(model = `model.x`) %>% 
+  select(topic, run, model, error_rate_per_run_per_topic, error_rate_per_run_across_topics)
+
+# adding additional grouping variables, i.e. mono/multi, bert-architecture, size
+all_error_rates$model_name <- str_extract(pattern = "data/.*/", string = all_error_rates$run) 
+all_error_rates <- all_error_rates %>% 
+  mutate("model_name" = substr(all_error_rates$model_name, 6, nchar(all_error_rates$model_name)-1))
+```
+
+## CALCULATING RTAC SCORES
+Models can be compared directly on accuracies, or on their Relative to Topic Accuracy Corrected scores (RTAC scores)
+```{r}
+# calculating RTAC
+loo_acc_df <- tibble("run" = 0, "model" = 0, "loo_acc" = 0, "topic" = 0)
+
+for (i in unique(df_models_w_topics$topic)) {
+  for_loop_df <- df_models_w_topics[-which(df_models_w_topics$topic == i),]
+  
+  for_loop_vec <- for_loop_df %>% 
+    group_by(run, model) %>% 
+    summarise("loo_acc" = mean(MISS_binary)) %>%
+    ungroup() %>% 
+    mutate("topic" = i)
+  
+  loo_acc_df <- rbind(loo_acc_df, for_loop_vec)
+  
+}
+
+# removing the empty row
+loo_acc_df <- loo_acc_df[-1,]
+
+# accuracy for each run of each model per topic
+error_rate_per_run_per_topic <- df_models_w_topics %>% 
+  group_by(topic, run, model) %>% 
+  summarise("error_rate_per_run_per_topic" = mean(MISS_binary))
+
+# merge leave-one-group-out accuracy calculations with the topic accuracy calculation
+df_models_rtac <- merge(loo_acc_df, error_rate_per_run_per_topic, all.x = T, all.y = T, by = c("run", "model", "topic"))
+
+# calculating the difference
+df_models_rtac <- df_models_rtac %>% 
+  mutate(rtac = error_rate_per_run_per_topic - loo_acc)
+```
+
+
+## VISALUSING ACCURACIES
+```{r}
+df_models_rtac %>% 
+  ggplot(aes(x = as.factor(topic), y = rtac)) +
+  geom_hline(yintercept = 0, linetype = "dashed")  +
+  geom_boxplot(fill = "#FF9999") +
+  theme_bw() +
+  labs(title = "Boxplot of RTAC", subtitle = "Distribution of RTAC for all models on all topics", x = "Topic Number", y = "RTAC")
+
+all_error_rates %>% 
+  ggplot(aes(x = as.factor(topic), y = error_rate_per_run_per_topic)) +
+  geom_hline(yintercept = 0, linetype = "dashed")  +
+  geom_boxplot(fill = "#FF9999") +
+  theme_bw() +
+  labs(title = "Boxplot of Accuracies", subtitle = "Distribution of Accuracies for all models on all topics", x = "Topic Number", y = "Accuracy")
+```
+
+
+## NUNERTICAL COMPARISON
+If you only want to compare the models on mean and standard deviation for each topic, then use the following numbers. However, we recommend to do statistical comparison, more specifically a Bayesin Analysis
+```{r}
+df_models_rtac %>% 
+  group_by(model, topic) %>% 
+  summarise("mean_rtac" = mean(rtac), "standard_deviation_rtac" = sd(rtac)) %>% 
+  arrange(topic)
+
+all_error_rates %>% 
+  group_by(model, topic) %>% 
+  summarise("mean_accuracy" = mean(error_rate_per_run_per_topic), "standard_deviation_accuracy" = sd(error_rate_per_run_per_topic)) %>% 
+  arrange(topic)
+```
+
+
+## STATISTICAL COMPARISON
+
+### Set Priors
+```{r}
+prior_df <-  df_models_rtac %>% 
+  filter(topic == 1)
+
+# set your own priors appriopriate for your comparison
+priors <- prior(normal(0,0.2), class = b) + 
+  prior(normal(0,0.2), class = Intercept) + 
+  prior(exponential(20), class = sd) +
+  prior(exponential(20), class = sigma)
+
+# see if priors make sense
+validate_prior(prior_lingual_acc, rtac ~ 1 + language + (1|language_model),
+               data = prior_df, family = gaussian())
+
+# produce prediction with the priors
+fit_prior_lingual <- brm(diff_topic ~ 1 + language + (1|language_model),
+            data = prior_df, 
+            family = gaussian(), 
+            sample_prior = "only", # this is important for producing prior predictions
+            prior = prior_lingual_acc, 
+            chains = 4, 
+            cores = 4, 
+            iter = 4000, 
+            warmup = floor(4000/2))
+
+# make a prior predictive check
+#png("../figures/posterior_and_traceplots/mono_multi_model/mono_multi_prior_predictive_check.png", units = "px", width=1800, height=1200, res = 200)
+pp_check(fit_prior_lingual, ndraws = 100)+
+coord_cartesian(xlim = c(-1, 1))
+#dev.off()
+```
+
+### Make a model for each topic
+You can force it to have no intercept to allow for easier calculation of contrasts
+```{r}
+# creating a function that filters for topic and creates ULAM model
+
+func_lingual <- function(topic){
+  func_df <- df_models_rtac %>% 
+    filter(left_out == topic)
+  
+  func_model_lingual <- brm(rtac ~ 1 + language + (1|language_model),
+            data = func_df, 
+            family = gaussian(), 
+            sample_prior = "no", 
+            prior = prior_lingual_acc, 
+            chains = 4, 
+            cores = 4, 
+            iter = 2000, 
+            warmup = floor(2000/2))
+  
+  return(func_model_lingual)
+}
+
+# applying the function for all topics individually
+list_models <- lapply(as.list(unique(analysis_df$topic)), func_lingual)
+```
+
+### Check succes of sampling
+```{r}
+n <- length(list_models)
+
+datalist_rhat = vector("list", length = n)
+
+for (i in 1:n){
+  temp <- brms::rhat(list_models[[i]])
+  temp_df <- as.data.frame(temp) %>%
+    tibble::rownames_to_column("VALUE") %>% 
+    pivot_wider(names_from = VALUE, values_from = temp) %>% 
+    mutate("topic" = i) %>% 
+    relocate(topic) %>% 
+    mutate(across(where(is.numeric), round, 4))
+  
+  datalist_rhat[[i]] <- temp_df
+}
+
+rhat = do.call(rbind, datalist_rhat)
+write_csv(rhat, "file_path.csv")
+
+# saving traceplots
+# Open a png file
+for (i in 1:n) {
+  png("file_path.csv", units = "px", width=2400, height=1200, res = 200)
+  plot(list_models[[i]])
+  dev.off()
+  }
+
+```
+
+### Generating Contrast Plots
+```{r}
+library(tidybayes)
+
+n <- length(list_models)
+
+datalist = vector("list", length = n)
+
+# calculate all three contrasts
+for (i in 1:n) {
+  temp_df <- as_draws_df(list_models[[i]]) %>% 
+  mutate("model_1-model_2" = b_model1 - b_model2) %>% 
+  mutate("model_1-model_3" = b_model1 - b_model3) %>%
+  mutate("model_2-model_3" = b_model2 - b_model3) %>%
+  mutate("topic" = unique(df_models_rtac$topic)[i])
+  
+  datalist[[i]] <- temp_df
+  
+}
+
+data = do.call(rbind, datalist)
+
+plotlist = vector("list", length = n)
+
+# create a contrast plot for each topic
+for (i in 1:n) {
+  plotlist[[i]] <- data %>% 
+  filter(topic == i) %>% 
+  mutate("topic" = as.factor(topic)) %>% 
+  pivot_longer(cols = "model_1-model_2":"model_2-model_3", values_to = "RTAC", names_to = "Contrast") %>% 
+  ggplot(aes(y = Contrast, x = RTAC, fill = stat(x > 0))) +
+  stat_halfeye() +
+  geom_vline(xintercept = c(0), linetype = "dashed") +
+  scale_fill_manual(values = c("orange", "skyblue")) +
+  labs(
+    subtitle = paste("Contrast Plot For Topic", i),
+    xlab = "RTAC", ylab = "Topic") + 
+  theme_bw() + 
+      theme(legend.position="none",
+        axis.title.y = element_blank()
+        )
+  }
+
+pacman::p_load(gridExtra, cowplot, grid)
+
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+
+#combine all plots using cowplot. There should be one plot per topic
+plot <- plot_grid(plotlist[[1]], plotlist[[2]], plotlist[[3]],
+          plotlist[[4]], plotlist[[5]], plotlist[[6]],
+          plotlist[[7]], plotlist[[8]], plotlist[[9]],
+          plotlist[[10]], plotlist[[11]], plotlist[[12]],
+          ncol = 3, nrow = 4)
+
+# ggsave("file_path.png", plot = plot, width = 3000, height = 4000, units = "px")
+```
+
+### Generating model output
+```{r}
+n <- length(list_models)
+
+datalist_output = vector("list", length = n)
+
+for (i in 1:n) {
+  temp_df <- as_draws_df(list_models[[i]]) %>% 
+  mutate("model_1-model_2" = b_model1 - b_model2) %>% 
+  mutate("model_1-model_3" = b_model1 - b_model3) %>%
+  mutate("model_2-model_3" = b_model2 - b_model3) %>%
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  summarise(mean = mean(value),
+            ll   = quantile(value, prob = .025),
+            ul   = quantile(value, prob = .975)) %>% 
+  filter((name == "b_model1")|
+           (name == "b_model2")|
+           (name == "b_model3")|
+           (name == "model_1-model_2")|
+           (name == "model_1-model_3")|
+           (name == "model_2-model_3")|
+           (name == "sigma")
+         ) %>% 
+    mutate("topic" = unique(df_models_rtac$topic)[i]) %>% 
+    relocate(topic)
+  
+  datalist_output[[i]] <- temp_df
+}
+
+data_output = do.call(rbind, datalist_output)
+
+data_output <- data_output %>% 
+  mutate(across(where(is.numeric), round, 4))
+
+# write_csv(data_output, "file_path.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
